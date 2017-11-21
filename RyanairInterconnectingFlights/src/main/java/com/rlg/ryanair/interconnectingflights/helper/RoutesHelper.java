@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.rlg.ryanair.interconnectingflights.bean.FlightScheduleLocalDateTime;
 import com.rlg.ryanair.interconnectingflights.model.Day;
 import com.rlg.ryanair.interconnectingflights.model.Flight;
 import com.rlg.ryanair.interconnectingflights.model.Interconnection;
@@ -64,32 +63,45 @@ public class RoutesHelper {
 				if (departureSchedule != null) {
 					for (Day departureDay : departureSchedule.getDays()) {
 						for (Flight departureFlight : departureDay.getFlights()) {
-							FlightScheduleLocalDateTime firstFlightScheduleLocalDateTime = 
-									getFlightScheduleLocalDateTime(departureSchedule, 
-											departureDay, departureFlight);
-							if (firstFlightScheduleLocalDateTime.getDepartureLocalDateTime().
-									isBefore(departureLocalDateTime) == false)  {
+							Integer firstFlightDepartureHour = LocalTime.parse(departureFlight.getDepartureTime()).getHour();
+							Integer firstFlightDepartureMinute = LocalTime.parse(departureFlight.getDepartureTime()).getMinute();
+							LocalDateTime firstFlightScheduleDepartureLocalDateTime = LocalDateTime.of(departureSchedule.getYear(), 
+									departureSchedule.getMonth(), departureDay.getDay(), firstFlightDepartureHour, firstFlightDepartureMinute);
+							Integer firstFlightArrivalHour = LocalTime.parse(departureFlight.getArrivalTime()).getHour();
+							Integer firstFlightArrivalMinute = LocalTime.parse(departureFlight.getArrivalTime()).getMinute();
+							LocalDateTime firstFlightScheduleArrivalLocalDateTime = LocalDateTime.of(departureSchedule.getYear(), 
+									departureSchedule.getMonth(), departureDay.getDay(), firstFlightArrivalHour, firstFlightArrivalMinute);
+							if (firstFlightScheduleDepartureLocalDateTime.isBefore(departureLocalDateTime) == false)  {
 								Route arrivalRoute = interconnectedRoutes.get(departureRoute);
 								if (arrivalRoute != null) {
-									for (Schedule arrivalSchedule : arrivalRoute.getSchedules()) {
-										if (arrivalSchedule != null) {
-											for (Day arrivalDay : arrivalSchedule.getDays()) {
+									
+									for (Schedule arrvivalSchedule : arrivalRoute.getSchedules()) {
+										if (arrvivalSchedule != null) {
+											for (Day arrivalDay : arrvivalSchedule.getDays()) {
 												for (Flight arrivalFlight : arrivalDay.getFlights()) {
-													FlightScheduleLocalDateTime secondFlightScheduleLocalDateTime = 
-															getFlightScheduleLocalDateTime(arrivalSchedule, 
-																	arrivalDay, arrivalFlight);
-													if (secondFlightScheduleLocalDateTime.getArrivalLocalDateTime().
-															isAfter(arrivalLocalDateTime) == false) {
-														if (secondFlightScheduleLocalDateTime.getDepartureLocalDateTime().
-																isBefore(firstFlightScheduleLocalDateTime.
-																getArrivalLocalDateTime().plusHours(2)) == false) {
+													Integer secondFlightDepartureHour = LocalTime.parse(arrivalFlight.getDepartureTime()).getHour();
+													Integer secondFlightDepartureMinute = LocalTime.parse(arrivalFlight.getDepartureTime()).getMinute();
+													LocalDateTime secondFlightScheduleDepartureLocalDateTime = LocalDateTime.of(arrvivalSchedule.getYear(), 
+															arrvivalSchedule.getMonth(), arrivalDay.getDay(), secondFlightDepartureHour, secondFlightDepartureMinute);
+													Integer secondFlightArrivalHour = LocalTime.parse(arrivalFlight.getArrivalTime()).getHour();
+													Integer secondFlightArrivalMinute = LocalTime.parse(arrivalFlight.getArrivalTime()).getMinute();
+													LocalDateTime secondFlightScheduleArrivalLocalDateTime = LocalDateTime.of(arrvivalSchedule.getYear(), 
+															arrvivalSchedule.getMonth(), arrivalDay.getDay(), secondFlightArrivalHour, secondFlightArrivalMinute);
+													if (secondFlightScheduleArrivalLocalDateTime.isAfter(arrivalLocalDateTime) == false) {
+														if (secondFlightScheduleDepartureLocalDateTime.isBefore(firstFlightScheduleArrivalLocalDateTime.plusHours(2)) == false) {
 															Interconnection interconnection = new Interconnection();
 															Leg[] legs = new Leg[2];
-															Leg firtsFlightLeg = setFlightLeg(departureRoute, 
-																	firstFlightScheduleLocalDateTime);
+															Leg firtsFlightLeg = new Leg();
+															firtsFlightLeg.setDepartureAirport(departureRoute.getAirportFrom());
+															firtsFlightLeg.setArrivalAirport(departureRoute.getAirportTo());
+															firtsFlightLeg.setDepartureDateTime(firstFlightScheduleDepartureLocalDateTime.toString());
+															firtsFlightLeg.setArrivalDateTime(firstFlightScheduleArrivalLocalDateTime.toString());
 															legs[0] = firtsFlightLeg;
-															Leg secondFlightLeg = setFlightLeg(arrivalRoute, 
-																	secondFlightScheduleLocalDateTime);
+															Leg secondFlightLeg = new Leg();
+															secondFlightLeg.setDepartureAirport(arrivalRoute.getAirportFrom());
+															secondFlightLeg.setArrivalAirport(arrivalRoute.getAirportTo());
+															secondFlightLeg.setDepartureDateTime(secondFlightScheduleDepartureLocalDateTime.toString());
+															secondFlightLeg.setArrivalDateTime(secondFlightScheduleArrivalLocalDateTime.toString());
 															legs[1] = secondFlightLeg;
 															interconnection.setLegs(legs);
 															interconnection.setStops(1);
@@ -101,12 +113,14 @@ public class RoutesHelper {
 										}
 									}
 								} else {
-									if (firstFlightScheduleLocalDateTime.getArrivalLocalDateTime().
-											isAfter(arrivalLocalDateTime) == false) {
+									if (firstFlightScheduleArrivalLocalDateTime.isAfter(arrivalLocalDateTime) == false) {
 										Interconnection interconnection = new Interconnection();
 										Leg[] legs = new Leg[1];
-										Leg firtsFlightLeg = setFlightLeg(departureRoute, 
-												firstFlightScheduleLocalDateTime);
+										Leg firtsFlightLeg = new Leg();
+										firtsFlightLeg.setDepartureAirport(departureRoute.getAirportFrom());
+										firtsFlightLeg.setArrivalAirport(departureRoute.getAirportTo());
+										firtsFlightLeg.setDepartureDateTime(firstFlightScheduleDepartureLocalDateTime.toString());
+										firtsFlightLeg.setArrivalDateTime(firstFlightScheduleArrivalLocalDateTime.toString());
 										legs[0] = firtsFlightLeg;
 										interconnection.setLegs(legs);
 										interconnection.setStops(0);
@@ -121,41 +135,6 @@ public class RoutesHelper {
 		}
 		
 		return interconnections;
-	}
-	
-	private static Leg setFlightLeg(Route route, FlightScheduleLocalDateTime 
-			flightScheduleLocalDateTime) {
-		Leg flightLeg = new Leg();
-		flightLeg.setDepartureAirport(route.getAirportFrom());
-		flightLeg.setArrivalAirport(route.getAirportTo());
-		flightLeg.setDepartureDateTime(flightScheduleLocalDateTime.
-				getDepartureLocalDateTime().toString());
-		flightLeg.setArrivalDateTime(flightScheduleLocalDateTime.
-				getDepartureLocalDateTime().toString());
-		return null;	
-	}
-	
-	private static FlightScheduleLocalDateTime getFlightScheduleLocalDateTime(
-			Schedule schedule, Day day, Flight flight) {
-		
-		FlightScheduleLocalDateTime flightScheduleLocalDateTime = 
-				new FlightScheduleLocalDateTime();
-		Integer firstFlightDepartureHour = LocalTime.parse(flight.
-				getDepartureTime()).getHour();
-		Integer firstFlightDepartureMinute = LocalTime.parse(flight.
-				getDepartureTime()).getMinute();
-		flightScheduleLocalDateTime.setDepartureLocalDateTime(LocalDateTime.of(
-				schedule.getYear(), schedule.getMonth(), day.getDay(), 
-				firstFlightDepartureHour, firstFlightDepartureMinute));
-		Integer firstFlightArrivalHour = LocalTime.parse(flight.
-				getArrivalTime()).getHour();
-		Integer firstFlightArrivalMinute = LocalTime.parse(flight.
-				getArrivalTime()).getMinute();
-		flightScheduleLocalDateTime.setArrivalLocalDateTime(LocalDateTime.of(
-				schedule.getYear(), schedule.getMonth(), day.getDay(), 
-				firstFlightArrivalHour, firstFlightArrivalMinute));
-		
-		return flightScheduleLocalDateTime;
 	}
 
 }
