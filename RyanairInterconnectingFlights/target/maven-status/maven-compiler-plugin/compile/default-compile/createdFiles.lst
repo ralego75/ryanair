@@ -1,0 +1,13 @@
+com\rlg\ryanair\interconnectingflights\controller\HelloWorldRestController.class
+com\rlg\ryanair\interconnectingflights\service\UserService.class
+com\rlg\ryanair\interconnectingflights\configuration\ApplicationConfiguration.class
+com\rlg\ryanair\interconnectingflights\model\Schedule.class
+com\rlg\ryanair\interconnectingflights\configuration\ApplicationInitializer.class
+com\rlg\ryanair\interconnectingflights\model\Leg.class
+com\rlg\ryanair\interconnectingflights\model\Interconnection.class
+com\rlg\ryanair\interconnectingflights\configuration\CORSFilter.class
+com\rlg\ryanair\interconnectingflights\model\Flight.class
+com\rlg\ryanair\interconnectingflights\model\User.class
+com\rlg\ryanair\interconnectingflights\model\Route.class
+com\rlg\ryanair\interconnectingflights\controller\InterconnectionsRestController.class
+com\rlg\ryanair\interconnectingflights\service\UserServiceImpl.class
